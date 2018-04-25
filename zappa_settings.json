@@ -3,7 +3,7 @@
         "app_function": "service.app",
         "aws_region": "us-east-1",
         "profile_name": "default",
-        "project_name": "kf-api-bucket-service",
+        "project_name": "kf-api-bucketservice",
         "runtime": "python3.6",
         "manage_roles": false,
         "profile_name": "default",
