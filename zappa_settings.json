@@ -6,10 +6,10 @@
         "project_name": "kf-api-bucketservice",
         "runtime": "python3.6",
         "manage_roles": false,
-        "profile_name": "default",
+        "profile_name": null,
         "role_name": "kf-bucket-creator-lambda-dev-role",
         "role_arn": "arn:aws:iam::538745987955:role/kf-bucket-creator-lambda-dev-role",
-        "s3_bucket": "kf-api-us-east-1-dev-bucket-service",
+        "s3_bucket": "kf-api-us-east-1-dev-bucketservice",
         "keep_warm": false,
         "manage_roles": false,
         "vpc_config": {
@@ -19,6 +19,6 @@
         "aws_environment_variables" : {
             "BUCKET_SUFFIX": "dev"
         },
-        "iam_authorization": true
+        "iam_authorization": false
     }
 }

@@ -128,23 +128,5 @@ pipeline {
              }
      }
     }
-    stage('Rollback PRD') {
-      when {
-       environment name: 'ROLL_BACK', value: 'yes'
-       expression {
-           return env.BRANCH_NAME == 'master';
-       }
-       expression {
-         return tag != '';
-       }
-     }
-     steps {
-       slackSend (color: '#005e99', message: ":deploying_prd: DEPLOYING TO PRD: (${env.BUILD_URL})")
-       sh '''
-       kf-api-bucketservice-config/ci-scripts/rollback/rollback.sh prd
-       '''
-       slackSend (color: '#41aa58', message: ":white_check_mark: DEPLOYED TO PRD: (${env.BUILD_URL})")
-     }
-    }
   }
 }
