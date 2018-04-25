@@ -43,13 +43,6 @@ pipeline {
        }
      }
     }
-    stage('Build') {
-      steps {
-        sh '''
-        kf-api-bucketservice-config/ci-scripts/build_stage/build.sh
-        '''
-      }
-    }
     stage('Deploy Dev') {
       when {
         expression {
