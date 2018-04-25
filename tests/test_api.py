@@ -16,8 +16,8 @@ def client():
 def test_status(client):
     resp = client.get('/status')
     assert resp.status_code == 200
-    assert 'name' in json.loads(resp.data)
-    assert 'version' in json.loads(resp.data)
+    assert 'name' in json.loads(resp.data.decode())
+    assert 'version' in json.loads(resp.data.decode())
 
 
 @mock_s3
@@ -30,7 +30,7 @@ def test_my_model_save(client):
 
     assert resp.status_code == 201
 
-    resp = json.loads(resp.data)
+    resp = json.loads(resp.data.decode())
     assert 'message' in resp
     assert resp['message'].startswith('created')
     assert resp['message'].endswith('sd-00000000')
@@ -54,7 +54,7 @@ def test_bucket_list(client):
 
     resp = client.get('/buckets')
     assert resp.status_code == 200
-    resp = json.loads(resp.data)
+    resp = json.loads(resp.data.decode())
     assert 'buckets' in resp
     assert len(resp['buckets']) == 10
 
@@ -68,7 +68,7 @@ def test_bad_study(client):
                        data=json.dumps({'study_id': 'INVALID'}))
 
     assert resp.status_code == 400
-    resp = json.loads(resp.data)
+    resp = json.loads(resp.data.decode())
     assert 'message' in resp
     assert 'not a valid study_id' in resp['message']
     assert len(s3.list_buckets()['Buckets']) == 0
@@ -83,7 +83,7 @@ def test_no_study(client):
                        data=json.dumps({}))
 
     assert resp.status_code == 400
-    resp = json.loads(resp.data)
+    resp = json.loads(resp.data.decode())
     assert 'message' in resp
     assert 'expected study_id in body' in resp['message']
     assert len(s3.list_buckets()['Buckets']) == 0
