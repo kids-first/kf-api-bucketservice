@@ -35,6 +35,12 @@ def get_bucket_name(study_id):
                                       study_id.replace('_', '-')).lower()
 
 
+def authenticate():
+    """ Authenticate a request's token with vault """
+    token = os.environ.get('TOKEN', '')
+    return token == request.headers.get('Authorization', None)
+
+
 def parse_request(req):
     """ Parse fields from post body """
     # Parsing out the request body
