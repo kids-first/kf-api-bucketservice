@@ -6,10 +6,10 @@
         "project_name": "kf-api-bucketservice",
         "runtime": "python3.6",
         "manage_roles": false,
-        "profile_name": "default",
+        "profile_name": null,
         "role_name": "kf-bucket-creator-lambda-dev-role",
         "role_arn": "arn:aws:iam::538745987955:role/kf-bucket-creator-lambda-dev-role",
-        "s3_bucket": "kf-api-us-east-1-dev-bucket-service",
+        "s3_bucket": "kf-api-us-east-1-dev-bucketservice",
         "keep_warm": false,
         "manage_roles": false,
         "vpc_config": {
@@ -19,6 +19,50 @@
         "aws_environment_variables" : {
             "BUCKET_SUFFIX": "dev"
         },
-        "iam_authorization": true
+        "iam_authorization": false
+    },
+    "qa": {
+        "app_function": "service.app",
+        "aws_region": "us-east-1",
+        "profile_name": "default",
+        "project_name": "kf-api-bucketservice",
+        "runtime": "python3.6",
+        "manage_roles": false,
+        "profile_name": null,
+        "role_name": "kf-bucket-creator-lambda-qa-role",
+        "role_arn": "arn:aws:iam::538745987955:role/kf-bucket-creator-lambda-qa-role",
+        "s3_bucket": "kf-api-us-east-1-qa-bucketservice",
+        "keep_warm": false,
+        "manage_roles": false,
+        "vpc_config": {
+            "SubnetIds": [ "subnet-7355cd4c", "subnet-b70e8bea" ],
+            "SecurityGroupIds": [ "sg-733c9b3a" ]
+        },
+        "aws_environment_variables" : {
+            "BUCKET_SUFFIX": "qa"
+        },
+        "iam_authorization": false
+    },
+    "prd": {
+        "app_function": "service.app",
+        "aws_region": "us-east-1",
+        "profile_name": "default",
+        "project_name": "kf-api-bucketservice",
+        "runtime": "python3.6",
+        "manage_roles": false,
+        "profile_name": null,
+        "role_name": "kf-bucket-creator-lambda-prd-role",
+        "role_arn": "arn:aws:iam::538745987955:role/kf-bucket-creator-lambda-prd-role",
+        "s3_bucket": "kf-api-us-east-1-prd-bucketservice",
+        "keep_warm": false,
+        "manage_roles": false,
+        "vpc_config": {
+            "SubnetIds": [ "subnet-7355cd4c", "subnet-b70e8bea" ],
+            "SecurityGroupIds": [ "sg-733c9b3a" ]
+        },
+        "aws_environment_variables" : {
+            "BUCKET_SUFFIX": "prd"
+        },
+        "iam_authorization": false
     }
 }
