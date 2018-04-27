@@ -21,13 +21,6 @@
             "VAULT_URL": "https://vault-dev.kids-first.io",
             "VAULT_ROLE": "bucketservice_api_read",
             "BUCKET_SUFFIX": "dev"
-        },
-        "iam_authorization": false,
-		"authorizer": {
-            "function": "service.authenticate",
-            "result_ttl": 3600,
-            "token_source": "Authorization",
-            "validation_expression": "^Bearer \\w+$"
         }
     },
     "qa": {
@@ -52,13 +45,6 @@
             "VAULT_URL": "https://vault-dev.kids-first.io",
             "VAULT_ROLE": "bucketservice_api_read",
             "BUCKET_SUFFIX": "qa"
-        },
-        "iam_authorization": false,
-		"authorizer": {
-            "function": "service.authenticate",
-            "result_ttl": 3600,
-            "token_source": "Authorization",
-            "validation_expression": "^Bearer \\w+$"
         }
     },
     "prd": {
@@ -83,13 +69,6 @@
             "VAULT_URL": "https://vault-dev.kids-first.io",
             "VAULT_ROLE": "bucketservice_api_read",
             "BUCKET_SUFFIX": "prd"
-        },
-        "iam_authorization": false,
-		"authorizer": {
-            "function": "service.authenticate",
-            "result_ttl": 3600,
-            "token_source": "Authorization",
-            "validation_expression": "^Bearer \\w+$"
         }
     }
 }

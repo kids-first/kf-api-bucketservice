@@ -13,3 +13,4 @@ class Config():
 
     STAGE = os.environ.get('STAGE', 'dev')
     REGION = os.environ.get('REGION', 'us-east-1')
+    TOKEN = os.environ.get('TOKEN', '')
