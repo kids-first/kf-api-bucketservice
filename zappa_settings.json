@@ -17,9 +17,11 @@
             "SecurityGroupIds": [ "sg-733c9b3a" ]
         },
         "aws_environment_variables" : {
+            "BUCKET_SERVICE_SECRET": "secret/aws/bucketservice/token",
+            "VAULT_URL": "https://vault-dev.kids-first.io",
+            "VAULT_ROLE": "bucketservice_api_read",
             "BUCKET_SUFFIX": "dev"
-        },
-        "iam_authorization": false
+        }
     },
     "qa": {
         "app_function": "service.app",
@@ -39,9 +41,11 @@
             "SecurityGroupIds": [ "sg-733c9b3a" ]
         },
         "aws_environment_variables" : {
+            "BUCKET_SERVICE_SECRET": "secret/aws/bucketservice/token",
+            "VAULT_URL": "https://vault-dev.kids-first.io",
+            "VAULT_ROLE": "bucketservice_api_read",
             "BUCKET_SUFFIX": "qa"
-        },
-        "iam_authorization": false
+        }
     },
     "prd": {
         "app_function": "service.app",
@@ -61,8 +65,10 @@
             "SecurityGroupIds": [ "sg-733c9b3a" ]
         },
         "aws_environment_variables" : {
+            "BUCKET_SERVICE_SECRET": "secret/aws/bucketservice/token",
+            "VAULT_URL": "https://vault-dev.kids-first.io",
+            "VAULT_ROLE": "bucketservice_api_read",
             "BUCKET_SUFFIX": "prd"
-        },
-        "iam_authorization": false
+        }
     }
 }

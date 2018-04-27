@@ -8,6 +8,7 @@ from moto import mock_s3
 
 @pytest.yield_fixture(scope='session')
 def client():
+    app.config['TOKEN'] = ''
     app_context = app.app_context()
     app_context.push()
     yield app.test_client()

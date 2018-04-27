@@ -1,6 +1,7 @@
 import os
 import json
 import boto3
+from functools import wraps
 from flask import Flask, current_app, request, jsonify, abort
 from werkzeug.exceptions import HTTPException
 
@@ -35,6 +36,18 @@ def get_bucket_name(study_id):
                                       study_id.replace('_', '-')).lower()
 
 
+def authenticate(f):
+    """ Authenticate a request's token with vault """
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        token = current_app.config['TOKEN']
+        allow = request.headers.get('Authorization', '').replace('Bearer ', '') == token
+        if not allow:
+            return abort(403, 'Unauthorized')
+        return f(*args, **kwargs)
+    return wrapper
+
+
 def parse_request(req):
     """ Parse fields from post body """
     # Parsing out the request body
@@ -59,6 +72,7 @@ def status():
 
 
 @app.route("/buckets", methods=['POST'])
+@authenticate
 def new_bucket():
     """
     Create a new bucket in s3 given a study_id
@@ -71,6 +85,7 @@ def new_bucket():
     
 
 @app.route("/buckets", methods=['GET'])
+@authenticate
 def list_buckets():
     """
     List study buckets
@@ -78,5 +93,3 @@ def list_buckets():
     s3 = boto3.client("s3")
     buckets = s3.list_buckets()
     return jsonify({'buckets': buckets['Buckets']}), 200
-
-
