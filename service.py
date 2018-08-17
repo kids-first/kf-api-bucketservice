@@ -66,7 +66,7 @@ def parse_request(req):
 
 @app.route("/status", methods=['GET'])
 def status():
-    #return {'name': 'Bucket Creation Service', 'version': '0.1.0'}
+    # return {'name': 'Bucket Creation Service', 'version': '0.1.0'}
     return jsonify({'name': 'Bucket Creation Service',
                     'version': '0.1.0'})
 
