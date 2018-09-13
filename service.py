@@ -66,9 +66,8 @@ def parse_request(req):
 
 @app.route("/status", methods=['GET'])
 def status():
-    # return {'name': 'Bucket Creation Service', 'version': '0.1.0'}
     return jsonify({'name': 'Bucket Creation Service',
-                    'version': '0.1.0'})
+                    'version': '1.1.0'})
 
 
 @app.route("/buckets", methods=['POST'])
@@ -80,7 +79,55 @@ def new_bucket():
     study_id = parse_request(request)
     s3 = boto3.client("s3")
     bucket_name = get_bucket_name(study_id)
-    bucket = s3.create_bucket(Bucket=bucket_name)
+    bucket = s3.create_bucket(
+            ACL='private',
+            Bucket=bucket_name)
+
+    s3.put_bucket_encryption(
+        Bucket=bucket_name,
+        ServerSideEncryptionConfiguration={
+            'Rules': [
+                {
+                    'ApplyServerSideEncryptionByDefault': {
+                        'SSEAlgorithm': 'AES256',
+                    }
+                },
+            ]
+        }
+    )
+
+    s3.put_bucket_tagging(
+        Bucket=bucket_name,
+        Tagging={
+            'TagSet': [
+                {
+                    'Key': 'Name',
+                    'Value': f'{study_id}'
+                },
+                {
+                    'Key': 'Description',
+                    'Value': f'harmonized and source files for {study_id}'
+                },
+                {
+                    'Key': 'Environment',
+                    'Value': current_app.config['STAGE']
+                },
+                {
+                    'Key': 'AppId',
+                    'Value': 'kf-api-bucket-service'
+                },
+                {
+                    'Key': 'Owner',
+                    'Value': 'd3b'
+                },
+                {
+                    'Key': 'kf_id',
+                    'Value': study_id
+                },
+            ]
+        }
+    )
+
     return jsonify({'message': 'created {}'.format(bucket_name)}), 201
     
 
