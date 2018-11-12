@@ -76,6 +76,8 @@ def new_bucket():
     """
     Create a new bucket in s3 given a study_id
     """
+    logger = current_app.logger
+
     study_id = parse_request(request)
     s3 = boto3.client("s3")
     bucket_name = get_bucket_name(study_id)
@@ -136,6 +138,26 @@ def new_bucket():
             'Status': 'Enabled'
         }
     )
+
+    # Logging
+    # Go to logging bucket under STAGE/STUDY_ID/
+    log_prefix = f"studies/{current_app.config['STAGE']}/{bucket_name[-11:]}/"
+    try:
+        response = s3.put_bucket_logging(
+            Bucket=bucket_name,
+            BucketLoggingStatus={
+                'LoggingEnabled': {
+                    'TargetBucket': current_app.config['LOGGING_BUCKET'],
+                    'TargetPrefix': log_prefix,
+                }
+            },
+        )
+    except s3.exceptions.ClientError as err:
+        if err.response['Error']['Code'] == 'InvalidTargetBucketForLogging':
+            logger.error(f"logging not enabled, log bucket not found {current_app.config['LOGGING_BUCKET']}")
+        else:
+            logger.error(err)
+
 
     return jsonify({'message': 'created {}'.format(bucket_name)}), 201
     
