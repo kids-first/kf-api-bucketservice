@@ -96,6 +96,7 @@ def new_bucket():
         }
     )
 
+    # Tagging
     s3.put_bucket_tagging(
         Bucket=bucket_name,
         Tagging={
@@ -125,6 +126,14 @@ def new_bucket():
                     'Value': study_id
                 },
             ]
+        }
+    )
+    
+    # Versioning
+    response = s3.put_bucket_versioning(
+        Bucket=bucket_name,
+        VersioningConfiguration={
+            'Status': 'Enabled'
         }
     )
 
