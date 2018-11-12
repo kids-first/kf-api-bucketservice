@@ -40,6 +40,12 @@ def test_my_model_save(client):
     assert len(s3.list_buckets()['Buckets']) == 1
     assert s3.list_buckets()['Buckets'][0]['Name'] == bucket
 
+    # Introspect bucket for correct settings
+    bucket = boto3.resource('s3').Bucket(bucket)
+
+    assert bucket.Versioning().status == 'Enabled'
+
+
 
 @mock_s3
 def test_bucket_list(client):
