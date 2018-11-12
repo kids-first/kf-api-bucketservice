@@ -14,6 +14,9 @@ class Config():
     STAGE = os.environ.get('STAGE', 'dev')
     REGION = os.environ.get('REGION', 'us-east-1')
     TOKEN = os.environ.get('TOKEN', '')
+    LOGGING_BUCKET = os.environ.get('LOGGING_BUCKET',
+                                    'kf-s3-data-logging-bucket')
+
 
     # Try to load from vault
     if 'BUCKET_SERVER_SECRET' in os.environ:
