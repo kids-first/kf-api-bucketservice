@@ -81,10 +81,41 @@ def new_bucket():
     study_id = parse_request(request)
     s3 = boto3.client("s3")
     bucket_name = get_bucket_name(study_id)
-    bucket = s3.create_bucket(
-            ACL='private',
-            Bucket=bucket_name)
+    bucket = s3.create_bucket( ACL='private', Bucket=bucket_name)
 
+    # Encryption
+    _add_encryption(bucket_name)
+
+    # Tagging
+    _add_tagging(bucket_name, study_id)
+    
+    # Versioning
+    _add_versioning(bucket_name)
+
+    # Logging
+    _add_logging(bucket_name)
+
+    return jsonify({'message': 'created {}'.format(bucket_name)}), 201
+
+
+def _add_versioning(bucket_name):
+    """
+    Enabled versioning for a bucket
+    """
+    s3 = boto3.client("s3")
+    response = s3.put_bucket_versioning(
+        Bucket=bucket_name,
+        VersioningConfiguration={
+            'Status': 'Enabled'
+        }
+    )
+
+
+def _add_encryption(bucket_name):
+    """
+    Adds encryption to a bucket
+    """
+    s3 = boto3.client("s3")
     s3.put_bucket_encryption(
         Bucket=bucket_name,
         ServerSideEncryptionConfiguration={
@@ -98,7 +129,12 @@ def new_bucket():
         }
     )
 
-    # Tagging
+
+def _add_tagging(bucket_name, study_id):
+    """
+    Adds standard tag set to a bucket
+    """
+    s3 = boto3.client("s3")
     s3.put_bucket_tagging(
         Bucket=bucket_name,
         Tagging={
@@ -130,16 +166,13 @@ def new_bucket():
             ]
         }
     )
-    
-    # Versioning
-    response = s3.put_bucket_versioning(
-        Bucket=bucket_name,
-        VersioningConfiguration={
-            'Status': 'Enabled'
-        }
-    )
 
-    # Logging
+
+def _add_logging(bucket_name):
+    """
+    Adds access logging to a bucket
+    """
+    s3 = boto3.client("s3")
     # Go to logging bucket under STAGE/STUDY_ID/
     log_prefix = f"studies/{current_app.config['STAGE']}/{bucket_name[-11:]}/"
     try:
@@ -154,12 +187,10 @@ def new_bucket():
         )
     except s3.exceptions.ClientError as err:
         if err.response['Error']['Code'] == 'InvalidTargetBucketForLogging':
-            logger.error(f"logging not enabled, log bucket not found {current_app.config['LOGGING_BUCKET']}")
+            logger.error(f"logging not enabled, log bucket not found " +
+                         f"{current_app.config['LOGGING_BUCKET']}")
         else:
             logger.error(err)
-
-
-    return jsonify({'message': 'created {}'.format(bucket_name)}), 201
     
 
 @app.route("/buckets", methods=['GET'])
