@@ -178,6 +178,7 @@ def _add_logging(bucket_name):
     """
     Adds access logging to a bucket
     """
+    logger = current_app.logger
     s3 = boto3.client("s3")
     # Logging buckets need to be in the same region, determine based on name
     if '-dr' in bucket_name:
