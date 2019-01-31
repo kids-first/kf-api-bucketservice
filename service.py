@@ -95,6 +95,9 @@ def new_bucket():
     # Logging
     _add_logging(bucket_name)
 
+    # Replication
+    _add_replication(bucket_name)
+
     return jsonify({'message': 'created {}'.format(bucket_name)}), 201
 
 
@@ -191,7 +194,64 @@ def _add_logging(bucket_name):
                          f"{current_app.config['LOGGING_BUCKET']}")
         else:
             logger.error(err)
-    
+
+
+def _add_replication(bucket_name):
+    """
+    Configures a second bucket with `-dr` suffix and replicates the primary
+    bucket to it.
+    Adds a lifecycle policy to the dr bucket to immediately roll data into
+    glacier for cold storage
+    """
+    logger = current_app.logger
+    dr_bucket_name = f'{bucket_name}-dr'
+    dr_bucket_name = dr_bucket_name.replace('us-east-1', 'us-west-2')
+    study_id = ''
+    if bucket_name[-11:].startswith('sd-'):
+        study_id = bucket_name[-11:]
+
+    s3 = boto3.client("s3")
+    # Set up a second -dr bucket to replicate to
+    try:
+        bucket = s3.create_bucket(
+                ACL='private',
+                Bucket=dr_bucket_name,
+                CreateBucketConfiguration={
+                    'LocationConstraint': 'us-west-2'
+                })
+    except s3.exceptions.ClientError as err:
+        if err.response['Error']['Code'] == 'BucketAlreadyOwnedByYou':
+            logger.info(f'bucket {dr_bucket_name} already exists, continueing')
+
+    logger.info('adding encryption to replicated bucket')
+    _add_encryption(dr_bucket_name)
+    logger.info('adding versioning to replicated bucket')
+    _add_versioning(dr_bucket_name)
+    logger.info('adding tagging to replicated bucket')
+    _add_tagging(dr_bucket_name, study_id)
+
+    # Add the replication rule
+    iam_role = f"arn:aws:iam::538745987955:role/kf-s3-study-replication-{current_app.config['STAGE']}-role"
+    response = s3.put_bucket_replication(
+        Bucket=bucket_name,
+        ReplicationConfiguration={
+            'Role': iam_role,
+            'Rules': [
+                {
+                    'ID': 'string',
+                    'Status': 'Enabled',
+                    'Prefix': '',
+                    'Destination': {
+                        'Bucket': 'arn:aws:s3:::'+dr_bucket_name,
+                        'StorageClass': 'GLACIER',
+                    }
+                }
+            ]
+        }
+    )
+
+    return response
+
 
 @app.route("/buckets", methods=['GET'])
 @authenticate
