@@ -277,3 +277,54 @@ def list_buckets():
     s3 = boto3.client("s3")
     buckets = s3.list_buckets()
     return jsonify({'buckets': buckets['Buckets']}), 200
+
+
+if __name__ == '__main__':
+    """
+    When run from cli, retrospectively set up replication on all study buckets
+    """
+    s3 = boto3.client("s3")
+    buckets = s3.list_buckets()
+
+
+    buckets = [b['Name'] for b in buckets['Buckets'] if b['Name'].startswith('kf-study-us-east-1-prd-sd-')]
+    s3 = boto3.client("s3")
+
+    command = input(f'found {len(buckets)} study buckets to apply changes to'
+                     ', type Y to proceed: ')
+    if not command.lower() == 'y':
+        print('aborting')
+        exit()
+
+    with app.app_context():
+        for bucket_name in buckets:
+            print(f'===> PATCHING BUCKET {bucket_name}')
+            if bucket_name.endswith('-dr'):
+                continue
+            study_id = bucket_name[-11:]
+            print('setting up:', study_id)
+
+            # Encryption
+            print('enabling encryption')
+            resp = _add_encryption(bucket_name)
+            assert resp['ResponseMetadata']['HTTPStatusCode'] == 200
+
+            # Tagging
+            print('adding tagging')
+            resp = _add_tagging(bucket_name, study_id)
+            assert resp['ResponseMetadata']['HTTPStatusCode'] == 204
+
+            # Versioning
+            print('add versioning')
+            resp = _add_versioning(bucket_name)
+            assert resp['ResponseMetadata']['HTTPStatusCode'] == 200
+
+            # Logging
+            print('add logging')
+            resp = _add_logging(bucket_name)
+            assert resp['ResponseMetadata']['HTTPStatusCode'] == 200
+
+            # Replication
+            print('add replication')
+            resp = _add_replication(bucket_name)
+            assert resp['ResponseMetadata']['HTTPStatusCode'] == 200
