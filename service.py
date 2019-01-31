@@ -179,14 +179,23 @@ def _add_logging(bucket_name):
     Adds access logging to a bucket
     """
     s3 = boto3.client("s3")
-    # Go to logging bucket under STAGE/STUDY_ID/
-    log_prefix = f"studies/{current_app.config['STAGE']}/{bucket_name[-11:]}/"
+    # Logging buckets need to be in the same region, determine based on name
+    if '-dr' in bucket_name:
+        target_logging_bucket = current_app.config['DR_LOGGING_BUCKET']
+    else:
+        target_logging_bucket = current_app.config['LOGGING_BUCKET']
+    # Go to logging bucket under STAGE/STUDY_ID{-dr}/
+    s = bucket_name.find('sd-')
+    study_id = bucket_name[s:s+11]
+    if bucket_name.endswith('-dr'):
+        study_id += '-dr'
+    log_prefix = f"studies/{current_app.config['STAGE']}/{study_id}/"
     try:
         response = s3.put_bucket_logging(
             Bucket=bucket_name,
             BucketLoggingStatus={
                 'LoggingEnabled': {
-                    'TargetBucket': current_app.config['LOGGING_BUCKET'],
+                    'TargetBucket': target_logging_bucket,
                     'TargetPrefix': log_prefix,
                 }
             },
@@ -195,7 +204,7 @@ def _add_logging(bucket_name):
     except s3.exceptions.ClientError as err:
         if err.response['Error']['Code'] == 'InvalidTargetBucketForLogging':
             logger.error(f"logging not enabled, log bucket not found " +
-                         f"{current_app.config['LOGGING_BUCKET']}")
+                         f"{target_logging_bucket}")
         else:
             logger.error(err)
 
@@ -233,6 +242,8 @@ def _add_replication(bucket_name):
     _add_versioning(dr_bucket_name)
     logger.info('adding tagging to replicated bucket')
     _add_tagging(dr_bucket_name, study_id)
+    logger.info('adding logging to replicated bucket')
+    _add_logging(dr_bucket_name)
 
     # Add the replication rule
     iam_role = f"arn:aws:iam::538745987955:role/kf-s3-study-replication-{current_app.config['STAGE']}-role"

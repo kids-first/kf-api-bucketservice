@@ -17,6 +17,9 @@ class Config():
     LOGGING_BUCKET = os.environ.get('LOGGING_BUCKET',
                                     'kf-s3-data-logging-bucket')
 
+    DR_LOGGING_BUCKET = os.environ.get('DR_LOGGING_BUCKET',
+                                       'kf-dr-s3-data-logging-bucket')
+
 
     # Try to load from vault
     if 'BUCKET_SERVER_SECRET' in os.environ:
