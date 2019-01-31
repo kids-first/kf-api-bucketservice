@@ -112,6 +112,7 @@ def _add_versioning(bucket_name):
             'Status': 'Enabled'
         }
     )
+    return response
 
 
 def _add_encryption(bucket_name):
@@ -119,7 +120,7 @@ def _add_encryption(bucket_name):
     Adds encryption to a bucket
     """
     s3 = boto3.client("s3")
-    s3.put_bucket_encryption(
+    response = s3.put_bucket_encryption(
         Bucket=bucket_name,
         ServerSideEncryptionConfiguration={
             'Rules': [
@@ -131,6 +132,7 @@ def _add_encryption(bucket_name):
             ]
         }
     )
+    return response
 
 
 def _add_tagging(bucket_name, study_id):
@@ -138,7 +140,7 @@ def _add_tagging(bucket_name, study_id):
     Adds standard tag set to a bucket
     """
     s3 = boto3.client("s3")
-    s3.put_bucket_tagging(
+    response = s3.put_bucket_tagging(
         Bucket=bucket_name,
         Tagging={
             'TagSet': [
@@ -169,6 +171,7 @@ def _add_tagging(bucket_name, study_id):
             ]
         }
     )
+    return response
 
 
 def _add_logging(bucket_name):
@@ -188,6 +191,7 @@ def _add_logging(bucket_name):
                 }
             },
         )
+        return response
     except s3.exceptions.ClientError as err:
         if err.response['Error']['Code'] == 'InvalidTargetBucketForLogging':
             logger.error(f"logging not enabled, log bucket not found " +
