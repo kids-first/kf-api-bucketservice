@@ -81,11 +81,46 @@ def new_bucket():
     study_id = parse_request(request)
     s3 = boto3.client("s3")
     bucket_name = get_bucket_name(study_id)
-    bucket = s3.create_bucket(
-            ACL='private',
-            Bucket=bucket_name)
+    bucket = s3.create_bucket( ACL='private', Bucket=bucket_name)
 
-    s3.put_bucket_encryption(
+    # Encryption
+    _add_encryption(bucket_name)
+
+    # Tagging
+    _add_tagging(bucket_name, study_id)
+    
+    # Versioning
+    _add_versioning(bucket_name)
+
+    # Logging
+    _add_logging(bucket_name)
+
+    # Replication
+    _add_replication(bucket_name)
+
+    return jsonify({'message': 'created {}'.format(bucket_name)}), 201
+
+
+def _add_versioning(bucket_name):
+    """
+    Enabled versioning for a bucket
+    """
+    s3 = boto3.client("s3")
+    response = s3.put_bucket_versioning(
+        Bucket=bucket_name,
+        VersioningConfiguration={
+            'Status': 'Enabled'
+        }
+    )
+    return response
+
+
+def _add_encryption(bucket_name):
+    """
+    Adds encryption to a bucket
+    """
+    s3 = boto3.client("s3")
+    response = s3.put_bucket_encryption(
         Bucket=bucket_name,
         ServerSideEncryptionConfiguration={
             'Rules': [
@@ -97,9 +132,15 @@ def new_bucket():
             ]
         }
     )
+    return response
 
-    # Tagging
-    s3.put_bucket_tagging(
+
+def _add_tagging(bucket_name, study_id):
+    """
+    Adds standard tag set to a bucket
+    """
+    s3 = boto3.client("s3")
+    response = s3.put_bucket_tagging(
         Bucket=bucket_name,
         Tagging={
             'TagSet': [
@@ -130,37 +171,103 @@ def new_bucket():
             ]
         }
     )
-    
-    # Versioning
-    response = s3.put_bucket_versioning(
-        Bucket=bucket_name,
-        VersioningConfiguration={
-            'Status': 'Enabled'
-        }
-    )
+    return response
 
-    # Logging
-    # Go to logging bucket under STAGE/STUDY_ID/
-    log_prefix = f"studies/{current_app.config['STAGE']}/{bucket_name[-11:]}/"
+
+def _add_logging(bucket_name):
+    """
+    Adds access logging to a bucket
+    """
+    logger = current_app.logger
+    s3 = boto3.client("s3")
+    # Logging buckets need to be in the same region, determine based on name
+    if '-dr' in bucket_name:
+        target_logging_bucket = current_app.config['DR_LOGGING_BUCKET']
+    else:
+        target_logging_bucket = current_app.config['LOGGING_BUCKET']
+    # Go to logging bucket under STAGE/STUDY_ID{-dr}/
+    s = bucket_name.find('sd-')
+    study_id = bucket_name[s:s+11]
+    if bucket_name.endswith('-dr'):
+        study_id += '-dr'
+    log_prefix = f"studies/{current_app.config['STAGE']}/{study_id}/"
     try:
         response = s3.put_bucket_logging(
             Bucket=bucket_name,
             BucketLoggingStatus={
                 'LoggingEnabled': {
-                    'TargetBucket': current_app.config['LOGGING_BUCKET'],
+                    'TargetBucket': target_logging_bucket,
                     'TargetPrefix': log_prefix,
                 }
             },
         )
+        return response
     except s3.exceptions.ClientError as err:
         if err.response['Error']['Code'] == 'InvalidTargetBucketForLogging':
-            logger.error(f"logging not enabled, log bucket not found {current_app.config['LOGGING_BUCKET']}")
+            logger.error(f"logging not enabled, log bucket not found " +
+                         f"{target_logging_bucket}")
         else:
             logger.error(err)
 
 
-    return jsonify({'message': 'created {}'.format(bucket_name)}), 201
-    
+def _add_replication(bucket_name):
+    """
+    Configures a second bucket with `-dr` suffix and replicates the primary
+    bucket to it.
+    Adds a lifecycle policy to the dr bucket to immediately roll data into
+    glacier for cold storage
+    """
+    logger = current_app.logger
+    dr_bucket_name = f'{bucket_name}-dr'
+    dr_bucket_name = dr_bucket_name.replace('us-east-1', 'us-west-2')
+    study_id = ''
+    if bucket_name[-11:].startswith('sd-'):
+        study_id = bucket_name[-11:]
+
+    s3 = boto3.client("s3")
+    # Set up a second -dr bucket to replicate to
+    try:
+        bucket = s3.create_bucket(
+                ACL='private',
+                Bucket=dr_bucket_name,
+                CreateBucketConfiguration={
+                    'LocationConstraint': 'us-west-2'
+                })
+    except s3.exceptions.ClientError as err:
+        if err.response['Error']['Code'] == 'BucketAlreadyOwnedByYou':
+            logger.info(f'bucket {dr_bucket_name} already exists, continueing')
+
+    logger.info('adding encryption to replicated bucket')
+    _add_encryption(dr_bucket_name)
+    logger.info('adding versioning to replicated bucket')
+    _add_versioning(dr_bucket_name)
+    logger.info('adding tagging to replicated bucket')
+    _add_tagging(dr_bucket_name, study_id)
+    logger.info('adding logging to replicated bucket')
+    _add_logging(dr_bucket_name)
+
+    # Add the replication rule
+    iam_role = f"arn:aws:iam::538745987955:role/kf-s3-study-replication-{current_app.config['STAGE']}-role"
+    response = s3.put_bucket_replication(
+        Bucket=bucket_name,
+        ReplicationConfiguration={
+            'Role': iam_role,
+            'Rules': [
+                {
+                    'ID': 'string',
+                    'Status': 'Enabled',
+                    'Prefix': '',
+                    'Destination': {
+                        'Bucket': 'arn:aws:s3:::'+dr_bucket_name,
+                        'StorageClass': 'GLACIER',
+                    }
+                }
+            ]
+        }
+    )
+
+    return response
+
 
 @app.route("/buckets", methods=['GET'])
 @authenticate
@@ -171,3 +278,54 @@ def list_buckets():
     s3 = boto3.client("s3")
     buckets = s3.list_buckets()
     return jsonify({'buckets': buckets['Buckets']}), 200
+
+
+if __name__ == '__main__':
+    """
+    When run from cli, retrospectively set up replication on all study buckets
+    """
+    s3 = boto3.client("s3")
+    buckets = s3.list_buckets()
+
+
+    buckets = [b['Name'] for b in buckets['Buckets'] if b['Name'].startswith('kf-study-us-east-1-prd-sd-')]
+    s3 = boto3.client("s3")
+
+    command = input(f'found {len(buckets)} study buckets to apply changes to'
+                     ', type Y to proceed: ')
+    if not command.lower() == 'y':
+        print('aborting')
+        exit()
+
+    with app.app_context():
+        for bucket_name in buckets:
+            print(f'===> PATCHING BUCKET {bucket_name}')
+            if bucket_name.endswith('-dr'):
+                continue
+            study_id = bucket_name[-11:]
+            print('setting up:', study_id)
+
+            # Encryption
+            print('enabling encryption')
+            resp = _add_encryption(bucket_name)
+            assert resp['ResponseMetadata']['HTTPStatusCode'] == 200
+
+            # Tagging
+            print('adding tagging')
+            resp = _add_tagging(bucket_name, study_id)
+            assert resp['ResponseMetadata']['HTTPStatusCode'] == 204
+
+            # Versioning
+            print('add versioning')
+            resp = _add_versioning(bucket_name)
+            assert resp['ResponseMetadata']['HTTPStatusCode'] == 200
+
+            # Logging
+            print('add logging')
+            resp = _add_logging(bucket_name)
+            assert resp['ResponseMetadata']['HTTPStatusCode'] == 200
+
+            # Replication
+            print('add replication')
+            resp = _add_replication(bucket_name)
+            assert resp['ResponseMetadata']['HTTPStatusCode'] == 200
