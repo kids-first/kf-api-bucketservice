@@ -95,6 +95,9 @@ def new_bucket():
     # Logging
     _add_logging(bucket_name)
 
+    # CORS
+    _add_cors(bucket_name)
+
     # Replication
     _add_replication(bucket_name)
 
@@ -269,6 +272,38 @@ def _add_replication(bucket_name):
     return response
 
 
+def _add_cors(bucket):
+    """
+    Adds CORS for Cavatica requests
+    """
+    client = boto3.client("s3")
+    return client.put_bucket_cors(
+        Bucket=bucket,
+        CORSConfiguration={
+            "CORSRules": [
+                {
+                    "AllowedHeaders": [
+                        "Authorization",
+                        "Content-Range",
+                        "Accept",
+                        "Content-Type",
+                        "Origin",
+                        "Range",
+                    ],
+                    "AllowedMethods": ["GET"],
+                    "AllowedOrigins": ["https://cavatica.sbgenomics.com"],
+                    "ExposeHeaders": [
+                        "Content-Range",
+                        "Content-Length",
+                        "ETag",
+                    ],
+                    "MaxAgeSeconds": 3000,
+                }
+            ]
+        },
+    )
+
+
 @app.route("/buckets", methods=['GET'])
 @authenticate
 def list_buckets():
@@ -328,4 +363,9 @@ if __name__ == '__main__':
             # Replication
             print('add replication')
             resp = _add_replication(bucket_name)
+            assert resp['ResponseMetadata']['HTTPStatusCode'] == 200
+
+            # CORS
+            print('add CORS')
+            resp = _add_cors(bucket_name)
             assert resp['ResponseMetadata']['HTTPStatusCode'] == 200
