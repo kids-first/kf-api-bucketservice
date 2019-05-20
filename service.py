@@ -317,7 +317,8 @@ def list_buckets():
 
 if __name__ == '__main__':
     """
-    When run from cli, retrospectively set up replication on all study buckets
+    When run from cli, retrospectively set up any existing buckets to make
+    sure everything is configured consistently. Sort of like a migration.
     """
     s3 = boto3.client("s3")
     buckets = s3.list_buckets()
