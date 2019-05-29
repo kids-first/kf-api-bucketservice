@@ -1,6 +1,6 @@
 import boto3
 import pytest
-from service import _add_replication
+from service import _add_replication, _add_cors
 from moto import mock_s3
 
 
@@ -26,3 +26,21 @@ def test_replication(client, logging_bucket):
     logging = bucket.Logging().logging_enabled
     assert logging['TargetBucket'] == 'kf-dr-s3-data-logging-bucket'
     assert logging['TargetPrefix'] == 'studies/dev/sd-00000000-dr/'
+
+
+@mock_s3
+def test_cors(client, logging_bucket):
+    """
+    Test that buckets created have CORS for cavatica
+    """
+    logging_bucket()
+    bucket_name = "sd-00000000"
+
+    client = boto3.client("s3")
+    s3 = boto3.resource("s3")
+    client.create_bucket(ACL="private", Bucket=bucket_name)
+    _add_cors(bucket_name)
+
+    rules = s3.BucketCors(bucket_name).cors_rules
+    assert len(rules) == 1
+    assert rules[0]["AllowedOrigins"] == ["https://cavatica.sbgenomics.com"]
