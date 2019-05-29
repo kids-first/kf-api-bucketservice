@@ -6,6 +6,35 @@ from flask import Flask, current_app, request, jsonify, abort
 from werkzeug.exceptions import HTTPException
 
 
+POLICY = """{{
+      "Version": "2012-10-17",
+      "Id": "kf001",
+      "Statement": [
+          {{
+              "Sid": "DenyDeleteObject",
+              "Effect": "Deny",
+              "Principal": "*",
+              "Action": [
+                "s3:DeleteObjectTagging",
+                "s3:DeleteObjectVersionTagging",
+                "s3:DeleteObjectVersion",
+                "s3:DeleteObject"
+              ],
+              "Resource": "arn:aws:s3:::{bucket_name}/*"
+          }},
+          {{
+              "Sid": "DenyDeleteBucket",
+              "Effect": "Deny",
+              "Principal": "*",
+              "Action": [
+                "s3:DeleteBucket"
+              ],
+              "Resource": "arn:aws:s3:::{bucket_name}"
+          }}
+      ]
+}}"""
+
+
 def create_app():
     app = Flask(__name__)
     app.config.from_object('config.Config')
@@ -82,6 +111,7 @@ def new_bucket():
     s3 = boto3.client("s3")
     bucket_name = get_bucket_name(study_id)
     bucket = s3.create_bucket( ACL='private', Bucket=bucket_name)
+    _add_policy(bucket_name)
 
     # Encryption
     _add_encryption(bucket_name)
@@ -236,6 +266,7 @@ def _add_replication(bucket_name):
                 CreateBucketConfiguration={
                     'LocationConstraint': 'us-west-2'
                 })
+        _add_policy(dr_bucket_name)
     except s3.exceptions.ClientError as err:
         if err.response['Error']['Code'] == 'BucketAlreadyOwnedByYou':
             logger.info(f'bucket {dr_bucket_name} already exists, continueing')
@@ -304,6 +335,16 @@ def _add_cors(bucket):
     )
 
 
+def _add_policy(bucket):
+    """
+    Adds a policy to the bucket. Will replace whatever policy already exists,
+    if there is one.
+    """
+    client = boto3.client("s3")
+    policy = POLICY.format(bucket_name=bucket)
+    return client.put_bucket_policy(Bucket=bucket, Policy=policy)
+
+
 @app.route("/buckets", methods=['GET'])
 @authenticate
 def list_buckets():
@@ -317,7 +358,8 @@ def list_buckets():
 
 if __name__ == '__main__':
     """
-    When run from cli, retrospectively set up replication on all study buckets
+    When run from cli, retrospectively set up any existing buckets to make
+    sure everything is configured consistently. Sort of like a migration.
     """
     s3 = boto3.client("s3")
     buckets = s3.list_buckets()
@@ -369,3 +411,8 @@ if __name__ == '__main__':
             print('add CORS')
             resp = _add_cors(bucket_name)
             assert resp['ResponseMetadata']['HTTPStatusCode'] == 200
+
+            # Add policy
+            print('add policy')
+            resp = _add_policy(bucket_name)
+            assert resp['ResponseMetadata']['HTTPStatusCode'] == 204

@@ -10,3 +10,9 @@ Kids First Bucket Service
 =========================
 
 A nano-service to create buckets for study data
+
+Run `service.py` to retroactively apply settings to all study buckets in prd.
+
+``` python
+python service.py
+```
