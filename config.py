@@ -17,6 +17,8 @@ class Config():
     LOGGING_BUCKET = os.environ.get('LOGGING_BUCKET',
                                     'kf-s3-data-logging-bucket')
 
+    INVENTORY_DEST = os.environ.get("INVENTORY_DEST", LOGGING_BUCKET)
+
     DR_LOGGING_BUCKET = os.environ.get('DR_LOGGING_BUCKET',
                                        'kf-dr-s3-data-logging-bucket')
 
