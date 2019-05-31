@@ -96,7 +96,7 @@ def parse_request(req):
 @app.route("/status", methods=['GET'])
 def status():
     return jsonify({'name': 'Bucket Creation Service',
-                    'version': '1.2.0'})
+                    'version': '1.3.0'})
 
 
 @app.route("/buckets", methods=['POST'])

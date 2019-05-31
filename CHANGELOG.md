@@ -1,3 +1,21 @@
+# Kids First Bucket Service Release 1.3.0
+
+## Features
+
+### Summary
+
+Feature Emojis: ✨x3 🔧x2 ⬆️x1
+Feature Labels: [feature](https://api.github.com/repos/kids-first/kf-api-bucketservice/labels/feature) x4 [refactor](https://api.github.com/repos/kids-first/kf-api-bucketservice/labels/refactor) x1 [devops](https://api.github.com/repos/kids-first/kf-api-bucketservice/labels/devops) x1
+
+### New features and changes
+
+- (#31) ✨ Add inventory when creating bucket - @dankolbman
+- (#30) ✨ Add bucket inventories - @dankolbman
+- (#27) 🔧 Add no-delete policy for buckets - @dankolbman
+- (#29) ✨ Add CORS for Cavatica - @dankolbman
+- (#28) ⬆️ Upgrade dependencies - @dankolbman
+- (#19) 🔧 Add migration scripts - @dankolbman
+
 # Kids First Bucket Service Release 1.2.0
 
 ## Features
