@@ -345,6 +345,45 @@ def _add_policy(bucket):
     return client.put_bucket_policy(Bucket=bucket, Policy=policy)
 
 
+def _add_inventory(bucket):
+    """
+    Adds inventory configuration to a bucket
+    """
+    client = boto3.client("s3")
+    dest = "arn:aws:s3:::{}".format(current_app.config["INVENTORY_DEST"])
+
+    return client.put_bucket_inventory_configuration(
+        Bucket=bucket,
+        Id="StudyBucketInventory",
+        InventoryConfiguration={
+            "Destination": {
+                "S3BucketDestination": {
+                    "Bucket": dest,
+                    "Format": "CSV",
+                    "Prefix": "inventories",
+                    "Encryption": {"SSES3": {}},
+                }
+            },
+            "IsEnabled": True,
+            "Id": "StudyBucketInventory",
+            "IncludedObjectVersions": "All",
+            "OptionalFields": [
+                "Size",
+                "LastModifiedDate",
+                "StorageClass",
+                "ETag",
+                "IsMultipartUploaded",
+                "ReplicationStatus",
+                "EncryptionStatus",
+                "ObjectLockRetainUntilDate",
+                "ObjectLockMode",
+                "ObjectLockLegalHoldStatus",
+            ],
+            "Schedule": {"Frequency": "Weekly"},
+        },
+    )
+
+
 @app.route("/buckets", methods=['GET'])
 @authenticate
 def list_buckets():
@@ -415,4 +454,9 @@ if __name__ == '__main__':
             # Add policy
             print('add policy')
             resp = _add_policy(bucket_name)
+            assert resp['ResponseMetadata']['HTTPStatusCode'] == 204
+
+            # Add inventory
+            print('add inventory')
+            resp = _add_inventory(bucket_name)
             assert resp['ResponseMetadata']['HTTPStatusCode'] == 204
