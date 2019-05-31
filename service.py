@@ -131,6 +131,9 @@ def new_bucket():
     # Replication
     _add_replication(bucket_name)
 
+    # Inventory
+    _add_inventory(bucket_name)
+
     return jsonify({'message': 'created {}'.format(bucket_name)}), 201
 
 
