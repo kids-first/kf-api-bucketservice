@@ -25,6 +25,11 @@ class Config:
         "DR_LOGGING_BUCKET", "kf-dr-s3-data-logging-bucket"
     )
 
+    # Endpoint for public keys to validate tokens in requests
+    AUTH0_JWKS = os.environ.get(
+        "AUTH0_JWKS", "https://kids-first.auth0.com/.well-known/jwks.json"
+    )
+
     # Try to load from vault
     if "BUCKET_SERVER_SECRET" in os.environ:
         import hvac
