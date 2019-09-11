@@ -1,6 +1,8 @@
 import os
+import jwt
 import json
 import boto3
+import requests
 from functools import wraps
 from flask import Flask, current_app, request, jsonify, abort
 from werkzeug.exceptions import HTTPException
@@ -68,18 +70,59 @@ def get_bucket_name(study_id):
     ).lower()
 
 
+def get_auth0_key():
+    """
+    Get a public key from Auth0's JWKS
+    Reformat the JWKS into a PEM format
+    """
+    resp = requests.get(current_app.config["AUTH0_JWKS"], timeout=10)
+    key = resp.json["keys"][0]
+    public_key = jwt.algorithms.RSAAlgorithm.from_jwk(json.dumps(key))
+    return public_key
+
+
 def authenticate(f):
-    """ Authenticate a request's token with vault """
+    """
+    Authenticate a request's token with vault or tries to verify a JWT against
+    Auth0
+    """
 
     @wraps(f)
     def wrapper(*args, **kwargs):
-        token = current_app.config["TOKEN"]
-        allow = (
-            request.headers.get("Authorization", "").replace("Bearer ", "")
-            == token
-        )
-        if not allow:
+        logger = current_app.logger
+
+        # Using a shared secret token
+        secret_token = current_app.config["TOKEN"]
+        if 'Bearer' not in request.headers.get("Authorization", ""):
             return abort(403, "Unauthorized")
+        token = request.headers.get("Authorization", "").split("Bearer ")[-1]
+
+        if token == secret_token:
+            return f(*args, **kwargs)
+
+        # Try to verify via Auth0
+        try:
+            public_key = get_auth0_key()
+            token = jwt.decode(
+                token,
+                public_key,
+                algorithms="RS256",
+                options={"verify_aud": False},
+            )
+        except (TypeError, KeyError):
+            # If we had trouble getting JWKS
+            return abort(403, "Unauthorized")
+        except jwt.exceptions.DecodeError as err:
+            logger.error(f"Problem authenticating request: {err}")
+            return abort(403, "Unauthorized")
+        except jwt.exceptions.InvalidTokenError as err:
+            logger.error(f"Token provided is not valid: {err}")
+            return abort(403, "Unauthorized")
+
+        # Make sure that a service is invoking the bucket creation
+        if not token.get("gty") == "client-credentials":
+            return abort(403, "Unauthorized")
+
         return f(*args, **kwargs)
 
     return wrapper
