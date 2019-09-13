@@ -14,11 +14,11 @@ def test_status(client):
 
 
 @mock_s3
-def test_my_model_save(client, logging_bucket):
+def test_my_model_save(service_client, logging_bucket):
     logging_bucket()
     s3 = boto3.client('s3')
 
-    resp = client.post('/buckets',
+    resp = service_client.post('/buckets',
                        headers={'Content-Type': 'application/json'},
                        data=json.dumps({'study_id': 'SD_00000000'}))
 
