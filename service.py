@@ -109,7 +109,11 @@ def authenticate(f):
                 algorithms="RS256",
                 options={"verify_aud": False},
             )
-        except (TypeError, KeyError):
+        except (
+            TypeError,
+            KeyError,
+            requests.exceptions.RequestException,
+        ) as err:
             # If we had trouble getting JWKS
             return abort(403, "Unauthorized")
         except jwt.exceptions.DecodeError as err:
