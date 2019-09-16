@@ -48,7 +48,6 @@ def auth0_key_mock():
     """
 
     class MockResp:
-        @property
         def json(self):
             with open("tests/jwks.json", "r") as f:
                 return json.load(f)

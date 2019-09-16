@@ -76,7 +76,7 @@ def get_auth0_key():
     Reformat the JWKS into a PEM format
     """
     resp = requests.get(current_app.config["AUTH0_JWKS"], timeout=10)
-    key = resp.json["keys"][0]
+    key = resp.json()["keys"][0]
     public_key = jwt.algorithms.RSAAlgorithm.from_jwk(json.dumps(key))
     return public_key
 
