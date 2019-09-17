@@ -1,3 +1,25 @@
+# Kids First Bucket Service Release 1.4.0
+
+## Features
+
+Adds OAuth service token authentication to verify incoming requests using
+Auth0.
+
+### Summary
+
+Feature Emojis: 🐛x1 ✅x1 🔒x1 🚨x1 movingx1 Terraformx1
+Feature Labels: [bug](https://api.github.com/repos/kids-first/kf-api-bucketservice/labels/bug) x2 [feature](https://api.github.com/repos/kids-first/kf-api-bucketservice/labels/feature) x1 [refactor](https://api.github.com/repos/kids-first/kf-api-bucketservice/labels/refactor) x1
+
+### New features and changes
+
+- (#39) 🐛 Proper json accession - @dankolbman
+- (#38) ✅ Fix tests - @dankolbman
+- (#37) 🔒 Auth0 - @dankolbman
+- (#36) 🚨 Format using black - @dankolbman
+- (#34) moving back to prd library - @blackdenc
+- (#33) Terraform 0.12 Upgrade - @blackdenc
+
+
 # Kids First Bucket Service Release 1.3.0
 
 ## Features
