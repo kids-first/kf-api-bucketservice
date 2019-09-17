@@ -22,7 +22,8 @@
             "VAULT_URL": "https://vault-dev.kids-first.io",
             "VAULT_ROLE": "bucketservice_api_read",
             "BUCKET_SUFFIX": "dev"
-        }
+        },
+        "exclude": ["*kf-api-bucketservice-config*", "*venv*"]
     },
     "qa": {
         "app_function": "service.app",
@@ -47,7 +48,8 @@
             "VAULT_URL": "https://vault-dev.kids-first.io",
             "VAULT_ROLE": "bucketservice_api_read",
             "BUCKET_SUFFIX": "qa"
-        }
+        },
+        "exclude": ["*kf-api-bucketservice-config*", "*venv*"]
     },
     "prd": {
         "app_function": "service.app",
@@ -72,6 +74,7 @@
             "VAULT_URL": "https://vault-dev.kids-first.io",
             "VAULT_ROLE": "bucketservice_api_read",
             "BUCKET_SUFFIX": "prd"
-        }
+        },
+        "exclude": ["*kf-api-bucketservice-config*", "*venv*"]
     }
 }
