@@ -6,6 +6,8 @@
   <a href="https://kids-first.github.io/kf-api-release-coordinator/docs/coordinator.html"><img src="https://img.shields.io/readthedocs/pip.svg?style=for-the-badge"></a>
 </p>
 
+⚠️ The bucket creation functionality is now performed by the [Study Creator](https://github.com/kids-first/kf-api-study-creator). This codebase is no longer in deployment.
+
 Kids First Bucket Service
 =========================
 
